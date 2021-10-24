@@ -1,5 +1,7 @@
 import pygame
 import random
+import yaml
+from yaml.loader import SafeLoader
 pygame.init()
 
 FPS = 10
@@ -15,6 +17,8 @@ TimeN = Time #неизменяемое время
 Score = 0
 ballform = True
 Yes = 0
+Name = ''
+j = 0
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -23,7 +27,12 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
 PINK = (255, 0, 255)
-COLORS = [RED, GREEN, BLUE, YELLOW, PINK]
+COLORS = (RED, GREEN, BLUE, YELLOW, PINK)
+ALPHABET = ("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
+            "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+            "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "_", "#")
+            
+
 
 def randomcolors():
     r = random.randint(0, 255)
@@ -132,6 +141,15 @@ class Square:
             peresechenie = False
         return peresechenie
 
+def update_records(recordlist):
+    for i in range(len(recordlist)):
+        for j in range(len(recordlist) - 1):
+            if recordlist[j]['points'] < recordlist[j + 1]['points']:
+                   table = recordlist[j]
+                   recordlist[j] = recordlist[j + 1]
+                   recordlist[j + 1] = table
+    
+
 pool_All = []
 for j in range(N_All):
     if j%20 == 20 - 1:
@@ -144,6 +162,9 @@ for j in range(N):
     pool.append(pool_All[0])
     pool_All.pop(0)
 
+with open("data.yaml", 'r') as f:
+    loaded = yaml.load(f, Loader = SafeLoader)
+
 
 clock = pygame.time.Clock()
 finished = False
@@ -153,13 +174,21 @@ Finish = False
 while not Start:
     pygame.draw.rect(screen, WHITE, (0, 0, brdrx + 2*R, brdry + 3*R))
     pygame.draw.rect(screen, BLACK, (R, R, brdrx, brdry), 1)
-    pygame.draw.polygon(screen, BLACK, ((R + 1.211*brdrx/3, R + brdry/3), (R + 1.211*brdrx/3, R + 2*brdry/3), (R + 1.943*brdrx/3, R + brdry/2)))
+    f3 = pygame.font.Font(None, 70)
+    text3 = f3.render('Enter your name:', True,(0, 0, 0))
+    f4 = pygame.font.Font(None, 70)
+    text4 = f4.render(Name, True,(0, 0, 0))
+    screen.blit(text3, (R + 0.1*brdrx, R + 0.25*brdry))
+    screen.blit(text4, (R + 0.1*brdrx, R + 0.25*brdry + 70*2))
     pygame.display.update()
     for event in pygame.event.get():
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:
-                if R < event.pos[0] < R + brdrx and R < event.pos[1] < R + brdry:
-                    Start = True
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RETURN and len(Name) > 2:
+                Start = True
+            elif event.key == pygame.K_BACKSPACE:
+                Name = Name[:-1]
+            elif len(Name) < 14 and (event.unicode in ALPHABET):
+                Name += event.unicode
 
 while not Finish:
     pygame.draw.rect(screen, WHITE, (0, 0, brdrx + 2*R, brdry + 3*R))
@@ -202,13 +231,28 @@ while not Finish:
     Yes -= 1
     pygame.display.update()
 
+
+loaded['results'].append({'name': Name, 'points': Score})
+update_records(loaded['results'])
+
+with open("data.yaml", 'w') as f:
+    yaml.dump(loaded, f)
+
 while not finished:
     pygame.draw.rect(screen, WHITE, (0, 0, brdrx + 2*R, brdry + 3*R))
     pygame.draw.rect(screen, BLACK, (R, R, brdrx, brdry), 1)
     pygame.draw.circle(screen, RED, (0.5*R + brdrx, 0.5*R), 0.25*R)
-    f2 = pygame.font.Font(None, 80)
-    text2 = f2.render('Score: ' + str(Score), True,(0, 0, 0))
-    screen.blit(text2, (R + 0.25*brdrx, R + 0.45*brdry))
+
+                   
+    f2 = pygame.font.Font(None, 50)
+    text2 = f2.render('Your Score: ' + str(Score), True,(0, 0, 0))
+    screen.blit(text2, (R + 0.25*brdrx, R + 0.1*brdry))
+    text3 = f2.render('Top-5 records:', True,(0, 0, 0))
+    screen.blit(text3, (R + 0.25*brdrx, R + 0.1*brdry + 80))
+    for i in range(5):
+        fresult = pygame.font.Font(None, 40)
+        textresult = fresult.render(str(loaded['results'][i]['name']) + ': ' + str(loaded['results'][i]['points']), True, (0, 0, 0))
+        screen.blit(textresult, (R + 0.25*brdrx, R + 0.1*brdry + 130 + 50*i))
     pygame.display.update()
 
     clock.tick(FPS)
