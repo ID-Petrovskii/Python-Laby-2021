@@ -35,6 +35,10 @@ ALPHABET = ("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n"
 
 
 def randomcolors():
+    '''
+    Функция возвращает случайный цвет, причем такой, что он
+    не слишком близок к черному и не слишком близок к белому
+    '''
     r = random.randint(0, 255)
     g = random.randint(0, 255)
     b = random.randint(0, 255)
@@ -46,7 +50,19 @@ def randomcolors():
     return col
 
 class Ball:
+    '''
+    Класс шариков - основных объектов в игре
+    '''
     def __init__(self):
+        '''
+        Функция определяет основные характеристика шарика
+        self.x - координата шарика по оси абсцисс
+        self.y - координата шарика по оси ординат
+        self.vx - скорость шарика по оси абсцисс
+        self.vy - скорость шарика по оси ординат
+        self.r - радиус шарика
+        self.color - цвет шарика
+        '''
         self.x = random.randint(2*R, brdrx - R)
         self.y = random.randint(2*R, brdry - R)
         self.vx = random.randint(-V, V)
@@ -55,17 +71,30 @@ class Ball:
         self.color = randomcolors()
 
     def form(self):
+        '''
+        Возращает истину, подтверждая шарообразную форму шарика (очев)
+        '''
         ballform = True
         return ballform
 
     def draw(self, surface):
+        '''
+        Отрисовывает шарик
+        '''
         pygame.draw.circle(surface, self.color, (self.x, self.y), self.r)
 
     def move(self):
+        '''
+        Перемещает шарик, увеличивая его координату на величину скорости
+        '''
         self.x += self.vx
         self.y += self.vy
 
     def collision(self):
+        '''
+        Проверяет не вышел ли шарик за границы поля
+        Если да - отражает его от границы
+        '''
         ch = 0
         if self.x - self.r < R or self.x + self.r > brdrx + R:
             self.vx = -self.vx
@@ -75,8 +104,15 @@ class Ball:
             ch = 1
         if ch == 1:
             Ball.move(self)
+            Ball.move(self)
 
     def peresechenie(self, x, y):
+        '''
+        Проверяет принадлежит ли точка с координатами х, у
+        данному объекту. В зависимости от этого возвращает правду или ложь
+        х - координата точки по оси абсцисс
+        у - координата точки по оси ординат
+        '''
         rast2 = (self.x - x)**2 + (self.y - y)**2
         if rast2 < (self.r)**2:
             peresechenie = True
@@ -85,7 +121,20 @@ class Ball:
         return peresechenie
 
 class Square:
+    '''
+    Класс квадратиков - дополнительных, редких объектов
+    '''
     def __init__(self):
+        '''
+        Функция определяет основные характеристика квадратика
+        self.x - координата квадратика по оси абсцисс
+        self.y - координата квадратика по оси ординат
+        self.vx - скорость квадратика по оси абсцисс
+        self.vy - скорость квадратика по оси ординат
+        self.r - радиус квадратика
+        self.color - цвет квадратика
+        self.time - счётчик времени жизни квадратика
+        '''
         self.x = random.randint(2*R, brdrx - R)
         self.y = random.randint(2*R, brdry - R)
         self.vx = random.randint(-V, V)
@@ -95,10 +144,16 @@ class Square:
         self.time = 0
 
     def form(self):
+        '''
+        Возращает ложь, так как квадратик не шарообразной формы (очев)
+        '''
         ballform = False
         return ballform
 
     def draw(self, surface):
+        '''
+        Отрисовывает квадратик
+        '''
         self.ancolor = (255 - self.color[0], 255 - self.color[1], 255 - self.color[2])
         pygame.draw.line(surface, BLACK, (self.x, self.y), (R, R))
         pygame.draw.line(surface, BLACK, (self.x, self.y), (R, R + brdry))
@@ -111,6 +166,12 @@ class Square:
         
 
     def move(self):
+        '''
+        Перемещает квадратик, увеличивая его координату на величину скорости
+        Так же увеличивает значение счётчика времени и если он достигает
+        достаточно больших значени - обнуляется и квадратик телепортируется,
+        меняя скорость
+        '''
         self.x += self.vx
         self.y += self.vy
         self.time += 1
@@ -124,6 +185,10 @@ class Square:
         
 
     def collision(self):
+        '''
+        Проверяет не вышел ли квадратик за границы поля
+        Если да - отражает его от границы
+        '''
         ch = 0
         if self.x - self.r < R or self.x + self.r > brdrx + R:
             self.vx = -self.vx
@@ -135,6 +200,12 @@ class Square:
             Square.move(self)
 
     def peresechenie(self, x, y):
+        '''
+        Проверяет принадлежит ли точка с координатами х, у
+        данному объекту. В зависимости от этого возвращает правду или ложь
+        х - координата точки по оси абсцисс
+        у - координата точки по оси ординат
+        '''
         if -self.r < x - self.x < self.r and -self.r < y - self.y < self.r:
             peresechenie = True
         else:
@@ -142,6 +213,11 @@ class Square:
         return peresechenie
 
 def update_records(recordlist):
+    '''
+    Обновляет переданный в функцию список, сортируя его по уменьшению
+    значений очков в данном элементе списка
+    recordlist - сортируемый список
+    '''
     for i in range(len(recordlist)):
         for j in range(len(recordlist) - 1):
             if recordlist[j]['points'] < recordlist[j + 1]['points']:
