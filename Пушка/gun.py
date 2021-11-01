@@ -21,7 +21,10 @@ GAME_COLORS = [RED, BLUE, YELLOW, GREEN, MAGENTA, CYAN]
 WIDTH = 800
 HEIGHT = 600
 
-g = 1 
+n_balls = 0
+g = 1
+score = 0
+text_time = 0
 
 
 class Ball:
@@ -163,9 +166,9 @@ class Gun:
         if self.f2_on:
             if self.f2_power < 100:
                 self.f2_power += 1
-            self.color = RED
+            self.color = YELLOW
         else:
-            self.color = GREY
+            self.color = BLACK
 
 
 class Target:
@@ -175,10 +178,21 @@ class Target:
         self.screen = screen
         self.x = randint(600, 780)
         self.y = randint(300, 550)
+        self.vx = randint(0, 5)
+        self.vy = randint(0, 5)
         self.r = randint(2, 50)
         self.color = RED
         self.live = 1
         self.points = 0
+
+    def move(self):
+        if self.x + self.vx > 780 or self.x + self.vx < 600:
+            self.vx *= -1
+        if self.y + self.vy > 550 or self.y + self.vy < 300:
+            self.vy *= -1
+        self.x += self.vx
+        self.y += self.vy
+        
 
     def hit(self, points=1):
         """Попадание шарика в цель."""
@@ -186,6 +200,9 @@ class Target:
 
     def new_target(self):
         self.__init__()
+
+    def score(self):
+        return self.points
     
     def draw(self):
         pygame.draw.circle(
@@ -210,16 +227,29 @@ balls = []
 
 clock = pygame.time.Clock()
 gun = Gun(screen)
-target = Target()
+targets = [Target()]
+targets.append(Target())
 finished = False
 
 while not finished:
     screen.fill(WHITE)
     gun.draw()
-    target.draw()
+    for t in targets:
+        t.draw()
     for b in balls:
         b.draw()
+    f1 = pygame.font.Font(None, 30)
+    text1 = f1.render(str(score), True, (0, 0, 0))
+    screen.blit(text1, (10, 10))
+    if text_time > 0:
+        text_time -= 1
+        f2 = pygame.font.Font(None, 30)
+        text2 = f2.render("Вы уничтожили цель за " + str(text) + " выстрелов", True, (0, 0, 0))
+        screen.blit(text2, (WIDTH//4, HEIGHT//2 - 30))
+    
     pygame.display.update()
+
+    
 
     clock.tick(FPS)
     for event in pygame.event.get():
@@ -229,15 +259,24 @@ while not finished:
             gun.fire2_start(event)
         elif event.type == pygame.MOUSEBUTTONUP:
             gun.fire2_end(event)
+            n_balls += 1
         elif event.type == pygame.MOUSEMOTION:
             gun.targetting(event)
 
+    for t in targets:
+        t.move()
+
     for b in balls:
         b.move()
-        if b.hittest(target) and target.live:
-            target.live = 0
-            target.hit()
-            target.new_target()
+        for t in targets:
+            if b.hittest(t) and t.live:
+                t.live = 0
+                t.hit()
+                t.new_target()
+                score += 1
+                text = n_balls
+                n_balls = 0
+                text_time = 30
     gun.power_up()
 
 pygame.quit()
